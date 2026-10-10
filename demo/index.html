@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Namma Exams">
+<meta name="theme-color" content="#0D1015">
+<link rel="apple-touch-icon" href="../engine/icons/icon-180.png">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="stylesheet" href="../engine/deck.css">
+<title>Deck engine demo · Namma Exams</title>
+<style>
+  /* Slide-specific styling for the illustration */
+  .cloud-move { transition: transform 1.8s ease-in-out; }
+  .cloud-move.on { transform: translate(375px, -115px) scale(1.15); }
+  .cloud-body { fill: #fff; transition: fill 1s ease; }
+  .cloud-body.on { fill: #B9C5D3; }
+</style>
+</head>
+<body>
+<main class="deck">
+
+  <!-- 1. Title -->
+  <section class="slide title">
+    <h1>Deck engine demo</h1>
+    <p class="course">Karnataka Geography for KAS</p>
+    <img class="logo" src="../assets/brand/logo.png" alt="Namma Exams">
+  </section>
+
+  <!-- 2. Illustration: animated, advanced by tap -->
+  <section class="slide illustration">
+    <div class="scene">
+      <svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#A9DBFF"/><stop offset="1" stop-color="#E9F6FF"/>
+          </linearGradient>
+          <marker id="head-wind" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--wind)"/></marker>
+          <marker id="head-dry" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#9A6A2E"/></marker>
+        </defs>
+        <rect width="1280" height="720" fill="url(#sky)"/>
+        <g fill="var(--sun)"><circle cx="180" cy="150" r="46"/></g>
+
+        <!-- land: coast, windward forest slope, leeward slope, plateau -->
+        <path d="M700,250 L740,300 L790,380 L860,460 L1280,470 L1280,720 L700,720 Z" fill="#B98A55"/>
+        <path d="M860,460 L1280,470 L1280,720 L860,720 Z" fill="var(--plateau)"/>
+        <path d="M520,548 L600,420 L650,330 L700,250 L700,720 L520,720 Z" fill="var(--forest)"/>
+        <path d="M430,560 L520,548 L520,720 L430,720 Z" fill="var(--coast)"/>
+        <rect x="0" y="560" width="432" height="160" fill="var(--water)"/>
+        <g stroke="#fff" stroke-width="3" fill="none" opacity=".6" stroke-linecap="round">
+          <path d="M40,590 q20,-10 40,0 t40,0"/><path d="M260,600 q20,-10 40,0 t40,0"/><path d="M150,700 q20,-10 40,0 t40,0"/>
+        </g>
+
+        <!-- step 1: moist winds, vapour, cloud forms over the sea -->
+        <g data-step="1">
+          <text x="64" y="372" font-size="32" font-weight="700" fill="var(--ink)">Monsoon winds</text>
+          <g stroke="var(--wind)" stroke-width="7" fill="none" stroke-linecap="round">
+            <path class="anim-flow" d="M64,412 H380" marker-end="url(#head-wind)"/>
+            <path class="anim-flow" d="M64,462 H420" marker-end="url(#head-wind)"/>
+          </g>
+          <g class="anim-rise" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round">
+            <path d="M110,555 q-8,-12 0,-24 q8,-12 0,-24"/>
+            <path d="M210,555 q-8,-12 0,-24 q8,-12 0,-24"/>
+            <path d="M310,555 q-8,-12 0,-24 q8,-12 0,-24"/>
+            <path d="M390,555 q-8,-12 0,-24 q8,-12 0,-24"/>
+          </g>
+        </g>
+
+        <!-- step 3: heavy rain on the windward side -->
+        <g data-step="3">
+          <g class="anim-rain" stroke="var(--rain)" stroke-width="5" stroke-linecap="round">
+            <line x1="530" y1="225" x2="530" y2="532"/><line x1="560" y1="225" x2="560" y2="484"/>
+            <line x1="590" y1="225" x2="590" y2="436"/><line x1="620" y1="225" x2="620" y2="384"/>
+            <line x1="650" y1="225" x2="650" y2="330"/><line x1="680" y1="225" x2="680" y2="283"/>
+          </g>
+          <text x="500" y="300" text-anchor="end" font-size="32" font-weight="700" fill="var(--water-deep)">Heavy rain</text>
+        </g>
+
+        <!-- cloud: appears (1), climbs the Ghats (2), turns grey (3) -->
+        <g data-step="1">
+          <g class="cloud-move" data-on="2">
+            <g class="cloud-body" data-on="3">
+              <circle cx="190" cy="300" r="38"/><circle cx="240" cy="278" r="50"/><circle cx="292" cy="300" r="40"/>
+              <rect x="190" y="290" width="102" height="48" rx="20"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- step 4: dry air sinks on the leeward side -->
+        <g data-step="4">
+          <path class="anim-flow" d="M760,250 C820,300 860,360 960,400" stroke="#9A6A2E" stroke-width="7" fill="none" stroke-linecap="round" marker-end="url(#head-dry)"/>
+          <text x="1060" y="570" text-anchor="middle" font-size="32" font-weight="700" fill="var(--ink)">Rain shadow</text>
+          <text x="1060" y="612" text-anchor="middle" font-size="30" font-weight="600" fill="var(--ink)" class="kn">(ಮಳೆ ನೆರಳು)</text>
+        </g>
+
+        <!-- fixed labels -->
+        <text x="64" y="598" font-size="32" font-weight="700" fill="#fff">Arabian Sea</text>
+        <text x="64" y="636" font-size="30" font-weight="600" fill="#fff" class="kn">(ಅರಬ್ಬೀ ಸಮುದ್ರ)</text>
+        <text x="690" y="630" text-anchor="middle" font-size="32" font-weight="700" fill="var(--ink)" class="halo">Western Ghats</text>
+        <text x="690" y="672" text-anchor="middle" font-size="30" font-weight="600" fill="var(--ink)" class="halo kn">(ಪಶ್ಚಿಮ ಘಟ್ಟಗಳು)</text>
+      </svg>
+    </div>
+    <h2 style="align-self:flex-end">Orographic rainfall</h2>
+  </section>
+
+  <!-- 3. Diagram: builds step by step -->
+  <section class="slide diagram">
+    <h2>The water cycle <span class="kn">(ಜಲಚಕ್ರ)</span></h2>
+    <div class="cycle">
+      <div class="node n1 pop" data-step="1" style="--c:var(--c2)">Evaporation</div>
+      <div class="arrow right a1" data-step="2"></div>
+      <div class="node n2 pop" data-step="2" style="--c:var(--c6)">Condensation</div>
+      <div class="arrow down a2" data-step="3"></div>
+      <div class="node n3 pop" data-step="3" style="--c:var(--c5)">Precipitation</div>
+      <div class="arrow left a3" data-step="4"></div>
+      <div class="node n4 pop" data-step="4" style="--c:var(--c8)">Collection</div>
+      <div class="arrow up a4" data-step="5"></div>
+      <div class="hub">
+        <svg viewBox="0 0 24 24" width="110" height="110"><path d="M12 2.5C9 7 5.5 10.6 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 10.6 15 7 12 2.5z" fill="var(--water)"/><path d="M9 15a3 3 0 0 0 3 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Map: base map plus layers switched on in order -->
+  <section class="slide map">
+    <h2>Map layers (demo)</h2>
+    <div class="map-row">
+      <div class="map-frame" data-svg="../assets/maps/demo-placeholder.svg" data-layers="rivers forest cities"></div>
+      <ul class="legend">
+        <li class="line" data-step="1" style="--c:var(--water)">Rivers</li>
+        <li data-step="2" style="--c:var(--forest)">Forest</li>
+        <li class="dot" data-step="3" style="--c:var(--city)">Cities</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5. Blank map: outline only, for marking by hand -->
+  <section class="slide blank-map">
+    <h2>Blank map: mark the rivers</h2>
+    <div class="map-frame" data-svg="../assets/maps/demo-placeholder.svg" data-layers=""></div>
+  </section>
+
+  <!-- 6. Whiteboard (grid) -->
+  <section class="slide whiteboard grid" data-label="Whiteboard (grid)"></section>
+
+  <!-- 7. Image placed for annotation -->
+  <section class="slide image">
+    <h2>Image for annotation</h2>
+    <figure class="image-frame"><img src="../assets/brand/logo.png" alt=""></figure>
+  </section>
+
+  <!-- 8. Recap -->
+  <section class="slide recap">
+    <h2>Recap</h2>
+    <ul class="points">
+      <li class="step rise">Monsoon winds rise over the Ghats</li>
+      <li class="step rise" style="--c:var(--water)">West side: heavy rain</li>
+      <li class="step rise" style="--c:var(--plateau)">East side: rain shadow</li>
+    </ul>
+  </section>
+
+  <!-- 9. End card: right half left clear for YouTube end-screen elements -->
+  <section class="slide end">
+    <div class="left">
+      <div class="channel">Namma Exams <span class="kn">ನಮ್ಮ ಎಕ್ಸಾಮ್ಸ್</span></div>
+      <div class="handle">@namma-exams</div>
+      <div class="next"><small>Next lesson</small><b>Next lesson title here</b></div>
+    </div>
+  </section>
+
+</main>
+<script src="../engine/deck.js"></script>
+</body>
+</html>

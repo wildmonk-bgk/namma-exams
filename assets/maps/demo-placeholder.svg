@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560">
+  <!-- DEMO ONLY: an invented shape for testing map layers. Not real geography. -->
+  <g data-layer="base">
+    <path d="M180,60 C260,30 380,50 450,90 C540,140 620,120 680,190 C730,250 700,330 650,380 C600,430 560,500 470,520 C380,540 330,480 260,470 C180,455 110,420 100,340 C90,260 120,200 130,150 C140,100 150,75 180,60 Z"
+          fill="#F6EED8" stroke="#14213D" stroke-width="4" stroke-linejoin="round"/>
+    <text x="400" y="545" text-anchor="middle" font-size="18" font-style="italic" fill="#46546B">Placeholder shape, not real map data</text>
+  </g>
+  <g data-layer="forest" fill="var(--forest)" opacity=".75">
+    <path d="M150,170 C190,130 260,150 255,200 C250,250 190,260 160,240 C135,222 130,190 150,170 Z"/>
+    <path d="M135,300 C160,270 215,285 210,330 C205,370 160,385 140,360 C125,342 122,318 135,300 Z"/>
+    <path d="M560,170 C600,160 640,190 630,225 C620,255 575,250 560,230 C548,212 545,180 560,170 Z"/>
+  </g>
+  <g data-layer="rivers" fill="none" stroke="var(--water)" stroke-width="6" stroke-linecap="round">
+    <path d="M640,250 C560,270 500,240 430,290 C370,330 300,310 230,360 C180,395 140,380 103,368"/>
+    <path d="M560,440 C510,410 470,360 430,290"/>
+  </g>
+  <g data-layer="cities" font-size="30" font-weight="700" fill="#14213D">
+    <circle cx="330" cy="170" r="12" fill="var(--city)" stroke="#fff" stroke-width="4"/>
+    <text x="350" y="160" class="halo">City A</text>
+    <circle cx="520" cy="330" r="12" fill="var(--city)" stroke="#fff" stroke-width="4"/>
+    <text x="540" y="320" class="halo">City B</text>
+    <circle cx="380" cy="440" r="12" fill="var(--city)" stroke="#fff" stroke-width="4"/>
+    <text x="400" y="430" class="halo">City C</text>
+  </g>
+</svg>

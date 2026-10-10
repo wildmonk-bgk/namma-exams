@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="deck.css">
+<title>Thumbnail</title>
+<!-- 1280×720 YouTube thumbnail template. Parameters (URL query):
+       title   3–5 words, use | for a line break      kn     Kannada line
+       kicker  small label, e.g. "Karnataka Geography · 01"
+     Rendered to PNG with engine/make-thumbnail.sh. -->
+<style>
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: var(--brand-teal); }
+  .thumb { position: relative; width: 1280px; height: 720px; box-sizing: border-box; padding: 64px 72px; color: #fff; font-family: var(--font); display: flex; flex-direction: column; justify-content: center; gap: 22px; overflow: hidden; }
+  .thumb::before { content: ''; position: absolute; right: -170px; top: -120px; width: 720px; height: 720px; border-radius: 50%; background: rgba(255, 208, 0, .14); }
+  .thumb::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 22px; background: var(--brand-yellow); }
+  .kicker { align-self: flex-start; padding: 10px 22px; border-radius: 999px; background: var(--brand-yellow); color: var(--ink); font-size: 34px; font-weight: 800; position: relative; }
+  h1 { margin: 0; max-width: 860px; font-size: 128px; line-height: .98; font-weight: 800; color: #fff; text-shadow: 0 6px 0 rgba(0,0,0,.18); position: relative; }
+  .kn { font-family: var(--font-kn); font-size: 70px; font-weight: 700; color: var(--brand-yellow); line-height: 1.2; position: relative; }
+  .mark { position: absolute; right: 72px; top: 50%; transform: translateY(-58%); width: 330px; height: 330px; border-radius: 50%; }
+  .brand { position: absolute; right: 72px; bottom: 60px; display: flex; align-items: center; gap: 14px; font-size: 40px; font-weight: 800; color: var(--brand-yellow); }
+  .brand span { font-family: var(--font-kn); font-size: 30px; color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="thumb">
+  <div class="kicker" id="kicker"></div>
+  <h1 id="title"></h1>
+  <div class="kn" id="kn"></div>
+  <img class="mark" src="icons/icon-512.png" alt="">
+  <div class="brand">Namma Exams <span>ನಮ್ಮ ಎಕ್ಸಾಮ್ಸ್</span></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('kicker').textContent = q.get('kicker') || '';
+  if (!q.get('kicker')) document.getElementById('kicker').remove();
+  document.getElementById('title').innerHTML = (q.get('title') || 'Lesson title').split('|').map(s => s.trim().replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))).join('<br>');
+  document.getElementById('kn').textContent = q.get('kn') || '';
+</script>
+</body>
+</html>
