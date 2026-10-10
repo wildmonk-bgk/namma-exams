@@ -18,14 +18,27 @@
 - Nothing important within 5% of the stage edges.
 
 ## Shared deck engine
-- Every deck uses the shared files in `engine/` (`deck.css`, `deck.js`).
+- Every deck uses the shared files in `engine/` (`deck.css`, `deck.js`, `perfect-freehand.js`).
 - Never copy engine code into a lesson. If something needs to change, improve the engine so every deck benefits.
 - The engine must provide all of the following:
   - **Navigation.** Tap the right side of the stage or swipe left to go next; tap the left side or swipe right to go back. Within a slide, steps reveal one by one before moving on to the next slide.
-  - **Pen toolbar (in the bands).** Pen in 3 colours, highlighter, eraser, and "clear slide". The Apple Pencil draws on the stage while finger taps navigate (use `pointerType` to tell them apart). Ink stays on each slide while the deck is open.
-  - **Slide counter (in the bands).** Small and unobtrusive.
+  - **Input rules.**
+    - Only a pointer that goes down on the stage can draw or navigate. The Apple Pencil uses the selected tool; fingers only navigate (use `pointerType` to tell them apart). On the Mac, the mouse acts as the Pencil.
+    - Palm rejection: finger touches on the stage are ignored while the Pencil is down, taps right after it lifts are ignored, and very large contacts are palms. Fingers still swipe between slides.
+    - Every band button works with finger and Pencil (acts on `pointerup`, not `click`). No `preventDefault` on document-level touch events; `touch-action: none` only on the stage and bands.
+    - Keep every button clear of the iPad home-indicator area.
+  - **Toolbar in the top band, GoodNotes 6 style.**
+    - Tools: Pen, Highlighter, Eraser (whole stroke or partial), Shapes, Lasso (select ink to move, resize or delete), Text, Laser pointer (glowing trail that fades after 2 seconds, never saved).
+    - Draw and hold snaps to a straight line, arrow, circle/ellipse or rectangle (the Shapes tool also snaps on lift).
+    - 3 thickness presets; 6 bright colour presets plus a custom colour picker. The selected tool and colour are clearly highlighted.
+    - Hand mode: Pencil taps and swipes change slides instead of drawing.
+  - **Smooth writing like GoodNotes.** Pointer events with `getCoalescedEvents()` and `getPredictedEvents()`; pressure-sensitive strokes with perfect-freehand, vendored in `engine/` (no CDN, works offline); rendering in `requestAnimationFrame`; canvas at full `devicePixelRatio`.
+  - **Bottom band.** Menu, YouTube button, "+" blank page, slide counter (small, with step dots), undo, redo, clear page, chapter timer.
+  - **Blank pages.** "+" inserts a page after the current slide: white, lined, grid, dotted or dark board. Inserted pages are named "Board 1", "Board 2"… (also in the chapter timer) and can be deleted.
+  - **Ink saving.** Each page's ink (and inserted pages) is kept on the device after the app closes (IndexedDB, per lesson). The menu has "Clear all ink in this lesson".
   - **iOS full-screen web-app setup.** Include the meta tags (`apple-mobile-web-app-capable`, `viewport-fit=cover`), safe-area padding and a home-screen icon.
   - **Chapter timer (in the bands).** A Start button that I tap when I start recording. From then on, log the time each slide first appears. After class, a "Copy chapters" button copies the list in YouTube chapter format (`0:00 Title`, then one line per slide), ready to paste into the video description. Also save the chapter list on the device (localStorage, keyed by lesson) so the lesson's YouTube page can include it automatically. Follow YouTube's rules: the first line is 0:00, there are at least 3 chapters, and each chapter is at least 10 seconds long (merge shorter ones into the previous chapter).
+  - **Updates.** After I publish, an open deck shows an "Update" button in the bottom band (checked every 5 minutes and whenever the app comes back to the screen). The menu's "Reload latest version" forces a fresh copy.
   - **Offline support (nice to have).** Decks should keep working without internet once loaded.
 
 ## Slide types

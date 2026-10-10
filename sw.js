@@ -1,9 +1,9 @@
 /* Offline support for all decks. Network first (so edits show up), cache as fallback.
    Every file a deck loads is cached the first time it is opened online. */
-const CACHE = 'namma-exams-v3';
+const CACHE = 'namma-exams-v4';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
-  './engine/deck.css', './engine/deck.js', './engine/youtube.js',
+  './engine/deck.css', './engine/deck.js', './engine/perfect-freehand.js', './engine/youtube.js',
   './engine/icons/mark.png', './engine/icons/icon-180.png', './engine/icons/icon-512.png',
 ];
 

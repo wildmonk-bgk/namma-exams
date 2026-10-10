@@ -33,10 +33,13 @@ Every deck links `engine/deck.css` and `engine/deck.js`. Copy the `<head>` of `d
 `anim-flow` (moving dashes: wind, rivers), `anim-rain`, `anim-rise` (vapour), `anim-bob`.
 
 ## Controls (all in the bands)
-- Top: 3 pens, highlighter, eraser, undo, clear slide, and a hand toggle for drawing with a finger or mouse.
-- Bottom: menu, ‹ counter ›, step dots, chapter timer (Start, elapsed time, Copy chapters).
-- Pencil draws; finger taps navigate (right 65% = next, left 35% = back); swipes navigate. Touches within 0.6 s of the Pencil lifting are ignored (palm).
-- Mac: click or arrow keys to navigate, hold ⌥ Option and drag to draw, G guides, M menu, F full screen, Z undo.
+- Top: Pen, Highlighter, Eraser, Shapes, Lasso, Text, Laser · tool options (3 thicknesses; eraser Whole/Part; lasso Delete) · 6 colours + custom · Hand mode.
+- Bottom: menu, YouTube, + blank page (delete button on inserted pages), ‹ counter + step dots ›, undo, redo, clear page, chapter timer, Update (after a publish).
+- Pencil uses the tool; fingers navigate (right 65% = next, left 35% = back, swipe). Touches are ignored while the Pencil is down, taps within 0.5 s after it lifts are ignored, and contacts wider than 44px count as palms.
+- Draw and hold (0.55 s) snaps pen, highlighter and shape strokes; the Shapes tool also snaps on lift.
+- Mac: the mouse acts as the Pencil · ← → keys · P H E S L T K tools · Z undo · Y redo · Delete removes a lasso selection · G guides · M menu · F full screen.
+- Ink and inserted pages are saved per lesson in IndexedDB (`namma-exams` → `lessons`, key = lesson folder). Page ids: `data-id` if set, else `type:label`, so give a slide `data-id` if you will rename its heading after teaching with ink on it.
+- Load `engine/perfect-freehand.js` before `deck.js` (the engine loads it itself if a deck forgets).
 
 ## Chapter timer
 Tap **Start** when recording starts. Each slide's first appearance is logged. **Copy chapters** copies YouTube-format lines. The first chapter is 0:00 and chapters under 10 s are merged into the previous one; it warns if there are fewer than 3. Reset it from the menu.
