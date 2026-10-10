@@ -75,7 +75,7 @@
   let pages = {}, hist = {}, boards = [], boardCount = 0, saveTimer = 0;
   let live = null, sel = null, textEdit = null, lastPenUp = -1e9, wakeLock = null;
   const touches = new Map();
-  const laser = { pts: [] };
+  const laser = { trails: [] };
   const pathCache = new WeakMap();
   let frame = 0, inkDirty = false, liveDirty = false;
   // Chapter timer
@@ -201,7 +201,8 @@
     updateCounter();
   }
   function next() { if (step < slides[cur]._steps) go(cur, step + 1); else if (cur < slides.length - 1) go(cur + 1, 0); }
-  function prev() { if (step > 0) go(cur, step - 1); else if (cur > 0) go(cur - 1, 'end'); }
+  // Going back to the previous slide starts it from the beginning, ready to build again.
+  function prev() { if (step > 0) go(cur, step - 1); else if (cur > 0) go(cur - 1, 0); }
   function hashSlide() { return Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1); }
 
   window.Deck = {
@@ -247,7 +248,7 @@
     slides = [...deckEl.querySelectorAll(':scope > .slide')];
     cur = -1;
     saveSoon();
-    go(Math.max(0, i - 1), 'end');
+    go(Math.max(0, i - 1), 0);
   }
 
   /* ---------- Chrome: stage, bands, menu ---------- */
@@ -404,7 +405,7 @@
     dotsEl = el('div', 'dots');
     ctr.append(counterEl, dotsEl);
     // Band arrows jump whole slides (screen taps and swipes step through reveals).
-    mid.append(button(ICONS.prev, 'Previous slide', () => go(cur - 1, 'end')), ctr, button(ICONS.next, 'Next slide', () => go(cur + 1, 0)));
+    mid.append(button(ICONS.prev, 'Previous slide', () => go(cur - 1, 0)), ctr, button(ICONS.next, 'Next slide', () => go(cur + 1, 0)));
 
     const right = el('div', 'band-side right');
     bottom.undo = button(ICONS.undo, 'Undo', undoInk);
@@ -698,7 +699,7 @@
     } else if (t === 'text') {
       if (e.type !== 'pointercancel' && dist(point(e), L.start) < 12) openText(L.start);
     } else if (t === 'laser') {
-      laser.down = false;
+      laserEnd();
     }
     liveDirty = inkDirty = true;
     requestDraw();
@@ -929,46 +930,78 @@
   }
 
   /* ---------- Laser pointer: glowing trail that fades, never saved ---------- */
+  /* The trail is smoothed once, as the Pencil moves (quadratic curves through the midpoints of its samples), so its
+     shape never changes afterwards: the tail just shortens as each part reaches 2 seconds, and the end fades out. */
   function laserAdd(p, startStroke) {
-    laser.pts.push({ x: p[0], y: p[1], t: now(), brk: !!startStroke });
+    const t = now();
+    if (startStroke || !laser.trails.length) laser.trails.push({ raw: [], pts: [] });
+    const tr = laser.trails[laser.trails.length - 1], raw = tr.raw;
+    raw.push([p[0], p[1], t]);
+    const n = raw.length, mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+    if (n === 1) tr.pts.push(raw[0]);
+    else if (n === 2) laserLine(tr, raw[0], mid(raw[0], raw[1]));
+    else {
+      const a = mid(raw[n - 3], raw[n - 2]), c = raw[n - 2], b = mid(raw[n - 2], raw[n - 1]);
+      const steps = Math.max(1, Math.ceil((dist(a, c) + dist(c, b)) / 2));
+      for (let k = 1; k <= steps; k++) {
+        const u = k / steps, v = 1 - u;
+        tr.pts.push([v * v * a[0] + 2 * v * u * c[0] + u * u * b[0], v * v * a[1] + 2 * v * u * c[1] + u * u * b[1], a[2] + (b[2] - a[2]) * u]);
+      }
+    }
     laser.down = true;
     laser.color = colorFor('laser');
     requestDraw();
   }
-  // Each trail is smoothed, then drawn as a few continuous paths grouped by fade level, so it has no beads or corners.
+  function laserLine(tr, a, b) {
+    const steps = Math.max(1, Math.ceil(dist(a, b) / 2));
+    for (let k = 1; k <= steps; k++) tr.pts.push([a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps, a[2] + (b[2] - a[2]) * k / steps]);
+  }
+  function laserEnd() {
+    const tr = laser.trails[laser.trails.length - 1];
+    if (tr && tr.raw.length > 1) {
+      const r = tr.raw, last = r[r.length - 1];
+      laserLine(tr, [(r[r.length - 2][0] + last[0]) / 2, (r[r.length - 2][1] + last[1]) / 2, (r[r.length - 2][2] + last[2]) / 2], last);
+    }
+    laser.down = false;
+    requestDraw();
+  }
   function drawLaser() {
     const ctx = wipe(laserCanvas), t = now();
-    laser.pts = laser.pts.filter(q => t - q.t < LASER_MS);
-    if (!laser.pts.length) return false;
-    const trails = [];
-    for (const q of laser.pts) (q.brk || !trails.length ? trails[trails.push([]) - 1] : trails[trails.length - 1]).push([q.x, q.y, q.t]);
-    const LEVELS = 16, level = q => Math.min(LEVELS - 1, Math.floor((t - q[2]) / LASER_MS * LEVELS));
+    // Cut each trail where it turns 2 seconds old (interpolated, so the tail moves smoothly).
+    laser.trails = laser.trails.filter((tr, i) => {
+      const pts = tr.pts, live = laser.down && i === laser.trails.length - 1;
+      let k = 0;
+      while (k < pts.length && t - pts[k][2] >= LASER_MS) k++;
+      if (k >= pts.length) { tr.pts = live ? pts.slice(-1) : []; return live; }
+      if (k > 0) {
+        const a = pts[k - 1], b = pts[k], u = (t - LASER_MS - a[2]) / Math.max(1, b[2] - a[2]);
+        tr.pts = [[a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, t - LASER_MS]].concat(pts.slice(k));
+      }
+      return true;
+    });
+    if (!laser.trails.length) return false;
     ctx.save();
     ctx.lineCap = ctx.lineJoin = 'round';
-    for (const pass of [{ w: 11, blur: 16, c: laser.color }, { w: 4, blur: 0, c: '#FFFFFF' }]) {
-      ctx.lineWidth = pass.w;
-      ctx.shadowBlur = pass.blur;
-      ctx.shadowColor = laser.color;
-      ctx.strokeStyle = pass.c;
-      for (const raw of trails) {
-        const pts = smoothPoints(raw, 2);
-        let i = 1;
-        while (i < pts.length) {
-          const lv = level(pts[i]);
-          ctx.globalAlpha = 1 - lv / LEVELS;
-          ctx.beginPath();
-          ctx.moveTo(pts[i - 1][0], pts[i - 1][1]);
-          while (i < pts.length && level(pts[i]) === lv) { ctx.lineTo(pts[i][0], pts[i][1]); i++; }
-          ctx.stroke();
-        }
+    for (const tr of laser.trails) {
+      const pts = tr.pts;
+      if (!pts.length) continue;
+      // fade the whole trail out over its last half second
+      ctx.globalAlpha = clamp((LASER_MS - (t - pts[pts.length - 1][2])) / 500, 0, 1);
+      for (const pass of [{ w: 11, blur: 16, c: laser.color }, { w: 4, blur: 0, c: '#FFFFFF' }]) {
+        ctx.lineWidth = pass.w; ctx.shadowBlur = pass.blur; ctx.shadowColor = laser.color; ctx.strokeStyle = pass.c;
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        if (pts.length === 1) ctx.lineTo(pts[0][0] + 0.01, pts[0][1]);
+        ctx.stroke();
       }
     }
     if (laser.down) {
-      const q = laser.pts[laser.pts.length - 1];
+      const tr = laser.trails[laser.trails.length - 1], q = tr.raw[tr.raw.length - 1];
       ctx.globalAlpha = 1; ctx.shadowBlur = 22; ctx.fillStyle = laser.color;
-      ctx.beginPath(); ctx.arc(q.x, q.y, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, Math.PI * 2); ctx.fill();
       ctx.shadowBlur = 0; ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(q[0], q[1], 4, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
     return true;

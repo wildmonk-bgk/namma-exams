@@ -21,14 +21,14 @@
 - Every deck uses the shared files in `engine/` (`deck.css`, `deck.js`, `perfect-freehand.js`).
 - Never copy engine code into a lesson. If something needs to change, improve the engine so every deck benefits.
 - The engine must provide all of the following:
-  - **Navigation.** Tap the right side of the stage or swipe left to go next; tap the left side or swipe right to go back. Within a slide, steps reveal one by one before moving on to the next slide. The ‹ › arrows in the bottom band jump whole slides (‹ shows the previous slide fully built).
+  - **Navigation.** Tap the right side of the stage or swipe left to go next; tap the left side or swipe right to go back. Within a slide, steps reveal one by one before moving on to the next slide. Going back to the previous slide starts it from the beginning. The ‹ › arrows in the bottom band jump whole slides.
   - **Input rules.**
     - Only a pointer that goes down on the stage can draw or navigate. The Apple Pencil uses the selected tool; fingers only navigate (use `pointerType` to tell them apart). On the Mac, the mouse acts as the Pencil.
     - Palm rejection: finger touches on the stage are ignored while the Pencil is down, taps right after it lifts are ignored, and very large contacts are palms. Fingers still swipe between slides.
     - Every band button works with finger and Pencil (acts on `pointerup`, not `click`). No `preventDefault` on document-level touch events; `touch-action: none` only on the stage and bands.
     - Keep every button clear of the iPad home-indicator area.
   - **Toolbar in the top band, GoodNotes 6 style.**
-    - Tools: Pen, Highlighter, Eraser (whole stroke or partial), Shapes, Lasso (select ink to move, resize or delete), Text, Laser pointer (glowing trail that fades after 2 seconds, never saved).
+    - Tools: Pen, Highlighter, Eraser (whole stroke or partial), Shapes, Lasso (select ink to move, resize or delete), Text, Laser pointer (glowing trail that fades smoothly after 2 seconds, never saved).
     - Draw and hold snaps to a straight line, arrow, circle/ellipse or rectangle (the Shapes tool also snaps on lift).
     - 3 thickness presets; 6 bright colour presets plus a custom colour picker. The selected tool and colour are clearly highlighted.
     - Hand mode: Pencil taps and swipes change slides instead of drawing.
