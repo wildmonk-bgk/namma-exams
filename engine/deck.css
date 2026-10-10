@@ -111,7 +111,8 @@ body.deck-app {
 }
 .stage .deck { visibility: visible; position: absolute; inset: 0; }
 
-.ink-layer { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; pointer-events: none; z-index: 20; }
+.ink-wrap { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 20; }
+.ink-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 /* Safe-zone guides (menu or G key), for checking layouts on the Mac */
 .guides { position: absolute; inset: 0; pointer-events: none; z-index: 30; display: none; }

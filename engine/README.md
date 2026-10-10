@@ -34,8 +34,9 @@ Every deck links `engine/deck.css` and `engine/deck.js`. Copy the `<head>` of `d
 
 ## Controls (all in the bands)
 - Top: Pen, Highlighter, Eraser, Shapes, Lasso, Text, Laser · tool options (3 thicknesses; eraser Whole/Part; lasso Delete) · 6 colours + custom · Hand mode.
-- Bottom: menu, YouTube, + blank page (delete button on inserted pages), ‹ counter + step dots ›, undo, redo, clear page, chapter timer, Update (after a publish).
+- Bottom: menu, YouTube, + blank page (delete button on inserted pages), ‹ counter + step dots › (arrows jump whole slides), undo, redo, clear page, chapter timer, Update (after a publish).
 - Pencil uses the tool; fingers navigate (right 65% = next, left 35% = back, swipe). Touches are ignored while the Pencil is down, taps within 0.5 s after it lifts are ignored, and contacts wider than 44px count as palms.
+- Strokes: centripetal Catmull-Rom through the samples, then perfect-freehand. The ink canvases are outside the scaled stage (`.ink-wrap`), sized to it in device pixels.
 - Draw and hold (0.55 s) snaps pen, highlighter and shape strokes; the Shapes tool also snaps on lift.
 - Mac: the mouse acts as the Pencil · ← → keys · P H E S L T K tools · Z undo · Y redo · Delete removes a lasso selection · G guides · M menu · F full screen.
 - Ink and inserted pages are saved per lesson in IndexedDB (`namma-exams` → `lessons`, key = lesson folder). Page ids: `data-id` if set, else `type:label`, so give a slide `data-id` if you will rename its heading after teaching with ink on it.

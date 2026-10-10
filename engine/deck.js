@@ -67,7 +67,7 @@
   if (!deckEl) return;           // library and YouTube pages: only the service worker
 
   // DOM
-  let stage, inkCanvas, liveCanvas, laserCanvas, bandTop, bandBottom, counterEl, dotsEl, menu, probe;
+  let stage, inkWrap, inkCanvas, liveCanvas, laserCanvas, bandTop, bandBottom, counterEl, dotsEl, menu, probe;
   let toolbar = {}, bottom = {};
   // Navigation
   let slides = [], cur = -1, step = 0, scale = 1, stageRect = null;
@@ -257,7 +257,10 @@
     inkCanvas = el('canvas', 'ink-layer');
     liveCanvas = el('canvas', 'ink-layer');
     laserCanvas = el('canvas', 'ink-layer');
-    stage.append(deckEl, inkCanvas, liveCanvas, laserCanvas, el('div', 'guides'));
+    stage.append(deckEl, el('div', 'guides'));
+    // Ink canvases sit outside the scaled stage, sized to it in real screen pixels, so strokes are never resampled.
+    inkWrap = el('div', 'ink-wrap');
+    inkWrap.append(inkCanvas, liveCanvas, laserCanvas);
 
     bandTop = el('div', 'band band-top');
     buildToolbar();
@@ -267,7 +270,7 @@
     menu = buildMenu();
     probe = el('div');
     probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
-    document.body.append(stage, bandTop, bandBottom, menu, probe);
+    document.body.append(stage, inkWrap, bandTop, bandBottom, menu, probe);
   }
 
   /* Buttons act on pointerup (finger, Pencil and mouse alike), so they never depend on iOS turning a tap into a click.
@@ -400,7 +403,8 @@
     counterEl = el('div', 'counter');
     dotsEl = el('div', 'dots');
     ctr.append(counterEl, dotsEl);
-    mid.append(button(ICONS.prev, 'Previous', prev), ctr, button(ICONS.next, 'Next', next));
+    // Band arrows jump whole slides (screen taps and swipes step through reveals).
+    mid.append(button(ICONS.prev, 'Previous slide', () => go(cur - 1, 'end')), ctr, button(ICONS.next, 'Next slide', () => go(cur + 1, 0)));
 
     const right = el('div', 'band-side right');
     bottom.undo = button(ICONS.undo, 'Undo', undoInk);
@@ -436,18 +440,21 @@
     const availW = vw - sa.l - sa.r, availH = vh - sa.t - sa.b - 2 * BAND_MIN;
     scale = Math.max(0.1, Math.min(availW / W, availH / H));
     const sw = W * scale, sh = H * scale;
-    const x = sa.l + (availW - sw) / 2;
-    const y = sa.t + BAND_MIN + (availH - sh) / 2;
+    const dpr = devicePixelRatio || 1, px = v => Math.round(v * dpr) / dpr;    // align to device pixels
+    const x = px(sa.l + (availW - sw) / 2);
+    const y = px(sa.t + BAND_MIN + (availH - sh) / 2);
     stage.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
     bandTop.style.height = y + 'px';
     bandBottom.style.top = (y + sh) + 'px';
     bandBottom.style.height = (vh - y - sh) + 'px';
     for (const b of [bandTop, bandBottom]) { b.style.paddingLeft = Math.max(x, 8) + 'px'; b.style.paddingRight = Math.max(vw - x - sw, 8) + 'px'; }
-    const k = Math.min(scale * (devicePixelRatio || 1), 4);      // full device resolution
+    // One canvas pixel per device pixel: the canvas is drawn at screen size, not scaled by CSS.
+    const cw = Math.round(sw * dpr), ch = Math.round(sh * dpr);
+    Object.assign(inkWrap.style, { left: x + 'px', top: y + 'px', width: cw / dpr + 'px', height: ch / dpr + 'px' });
     for (const c of [inkCanvas, liveCanvas, laserCanvas]) {
-      c.width = Math.round(W * k);
-      c.height = Math.round(H * k);
-      c.getContext('2d').setTransform(k, 0, 0, k, 0, 0);
+      c.width = cw;
+      c.height = ch;
+      c.getContext('2d').setTransform(cw / W, 0, 0, ch / H, 0, 0);
     }
     stageRect = null;
     inkDirty = liveDirty = true;
@@ -928,34 +935,67 @@
     laser.color = colorFor('laser');
     requestDraw();
   }
+  // Each trail is smoothed, then drawn as a few continuous paths grouped by fade level, so it has no beads or corners.
   function drawLaser() {
     const ctx = wipe(laserCanvas), t = now();
     laser.pts = laser.pts.filter(q => t - q.t < LASER_MS);
-    const pts = laser.pts;
-    if (!pts.length) return false;
+    if (!laser.pts.length) return false;
+    const trails = [];
+    for (const q of laser.pts) (q.brk || !trails.length ? trails[trails.push([]) - 1] : trails[trails.length - 1]).push([q.x, q.y, q.t]);
+    const LEVELS = 16, level = q => Math.min(LEVELS - 1, Math.floor((t - q[2]) / LASER_MS * LEVELS));
     ctx.save();
     ctx.lineCap = ctx.lineJoin = 'round';
-    for (const pass of [{ w: 12, blur: 18, c: laser.color }, { w: 4, blur: 0, c: '#FFFFFF' }]) {
+    for (const pass of [{ w: 11, blur: 16, c: laser.color }, { w: 4, blur: 0, c: '#FFFFFF' }]) {
       ctx.lineWidth = pass.w;
       ctx.shadowBlur = pass.blur;
       ctx.shadowColor = laser.color;
       ctx.strokeStyle = pass.c;
-      for (let i = 1; i < pts.length; i++) {
-        if (pts[i].brk) continue;
-        ctx.globalAlpha = Math.max(0, 1 - (t - pts[i].t) / LASER_MS);
-        ctx.beginPath();
-        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
-        ctx.lineTo(pts[i].x, pts[i].y);
-        ctx.stroke();
+      for (const raw of trails) {
+        const pts = smoothPoints(raw, 2);
+        let i = 1;
+        while (i < pts.length) {
+          const lv = level(pts[i]);
+          ctx.globalAlpha = 1 - lv / LEVELS;
+          ctx.beginPath();
+          ctx.moveTo(pts[i - 1][0], pts[i - 1][1]);
+          while (i < pts.length && level(pts[i]) === lv) { ctx.lineTo(pts[i][0], pts[i][1]); i++; }
+          ctx.stroke();
+        }
       }
     }
     if (laser.down) {
-      const q = pts[pts.length - 1];
-      ctx.globalAlpha = 1; ctx.shadowBlur = 24; ctx.fillStyle = laser.color;
+      const q = laser.pts[laser.pts.length - 1];
+      ctx.globalAlpha = 1; ctx.shadowBlur = 22; ctx.fillStyle = laser.color;
       ctx.beginPath(); ctx.arc(q.x, q.y, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(q.x, q.y, 4, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
     return true;
+  }
+
+  // Centripetal Catmull-Rom curve through the Pencil's samples, resampled every `step` px, so fast strokes stay
+  // round without overshooting. A third value (pressure, or time for the laser) is interpolated linearly.
+  function smoothPoints(P, step = 1.5) {
+    if (P.length < 3) return P;
+    const out = [P[0]], n = P.length;
+    const ext = (a, b) => [2 * a[0] - b[0], 2 * a[1] - b[1]];
+    const lerp = (a, b, ta, tb, t) => { const u = (t - ta) / (tb - ta); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]; };
+    for (let i = 0; i < n - 1; i++) {
+      const p1 = P[i], p2 = P[i + 1];
+      const p0 = i > 0 ? P[i - 1] : ext(p1, p2), p3 = i < n - 2 ? P[i + 2] : ext(p2, p1);
+      const t0 = 0, t1 = t0 + Math.max(1e-4, Math.sqrt(dist(p0, p1)));
+      const t2 = t1 + Math.max(1e-4, Math.sqrt(dist(p1, p2))), t3 = t2 + Math.max(1e-4, Math.sqrt(dist(p2, p3)));
+      const segs = Math.max(1, Math.ceil(dist(p1, p2) / step));
+      for (let k = 1; k <= segs; k++) {
+        const t = t1 + (t2 - t1) * k / segs;
+        const a1 = lerp(p0, p1, t0, t1, t), a2 = lerp(p1, p2, t1, t2, t), a3 = lerp(p2, p3, t2, t3, t);
+        const q = lerp(lerp(a1, a2, t0, t2, t), lerp(a2, a3, t1, t3, t), t1, t2, t);
+        if (p1.length > 2) q.push(p1[2] + (p2[2] - p1[2]) * k / segs);
+        out.push(q);
+      }
+    }
+    return out;
   }
 
   /* ---------- Rendering (one requestAnimationFrame per screen refresh) ---------- */
@@ -1016,7 +1056,7 @@
     if (it.t === 'pen' || it.t === 'hl') {
       let path = cache && pathCache.get(it);
       if (!path) {
-        path = outlinePath(PerfectFreehand.getStroke(it.p, freehandOptions(it, cache)));
+        path = outlinePath(PerfectFreehand.getStroke(smoothPoints(it.p), freehandOptions(it, cache)));
         if (cache) pathCache.set(it, path);
       }
       ctx.fillStyle = it.c;
