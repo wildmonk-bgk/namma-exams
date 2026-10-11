@@ -1,3 +1,5 @@
 .DS_Store
 # Finder duplicate of assets/brand (colon in the name)
 assets:brand:/
+# Private source material: never published
+notes/

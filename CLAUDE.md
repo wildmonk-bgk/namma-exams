@@ -85,6 +85,7 @@
 - Never use copyrighted images, maps or graphics from textbooks, coaching material or websites.
 - Fonts must be free for commercial use (e.g. Google Fonts).
 - List any credits required by a licence in `sources.md` so I can add them to the video description.
+- Files in `notes/` are private source material. Never publish them (the folder is in `.gitignore`), and never copy them into decks verbatim: use them only as background, and write slide text in your own words.
 
 ## Folder structure
 ```
@@ -92,6 +93,7 @@ engine/                  shared deck engine (css, js, fonts, icons)
 assets/maps/             map data, reused across decks
 assets/images/           my images
 assets/brand/            Namma Exams logo and channel art
+notes/                   private source material (never published, never copied verbatim)
 index.html               library menu: subjects, then lessons (each lesson has Teach and YouTube buttons)
 karnataka-geography/
   01-introduction/
